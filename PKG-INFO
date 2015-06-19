@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: libldap
+Version: 0.1
+Summary: OpenLDAP library wrapper
+Home-page: UNKNOWN
+Author: Yves Legrandgerard
+Author-email: ylg@pps.univ-paris-diderot.fr
+License: DWTFYWT
+Description: UNKNOWN
+Platform: Linux
+Platform: FreeBSD
