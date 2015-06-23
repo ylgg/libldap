@@ -777,16 +777,21 @@ LDAPObject_init(LDAPObject *self, PyObject *args, PyObject *kwds)
     }
     if (self->lud->lud_dn) {
 	char *s = strrchr(uri, '/');
+	char u[s - uri + 1];
 
-	*s = 0;
 	self->dn = PyUnicode_FromString(self->lud->lud_dn);
 	if (!self->dn)
 	    return -1;
+	(void) strncpy(u, uri, s - uri);
+	u[s - uri] = 0;
+	self->uri = PyUnicode_FromString(u);
     }
-    self->uri = PyUnicode_FromString(uri);
+    else
+	self->uri = PyUnicode_FromString(uri);
     if (!self->uri)
 	return -1;
-    ecode = ldap_initialize(&self->ldp, uri);
+    ecode = ldap_initialize(
+	&self->ldp, (char *) PyUnicode_1BYTE_DATA(self->uri));
     if (ecode != LDAP_SUCCESS) {
     	(void) PyErr_Format(
 	    LibLDAPErr, "%s.__init__(): ldap_initialize() %s",
