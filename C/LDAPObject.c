@@ -6,8 +6,7 @@
 #include <LDAPObject.h>
 #include <LDAPModObject.h>
 #include <LDAPControls.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <netinet/in.h>
 #include <netdb.h>
 
 /*****************************************************************************
