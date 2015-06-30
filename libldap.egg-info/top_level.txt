@@ -1,2 +1,2 @@
-_libldap
 libldap
+_libldap

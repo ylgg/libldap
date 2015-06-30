@@ -37,7 +37,10 @@ class LDAPMods(list):
         super(LDAPMods, self).__init__()
         for attr in attrs:
             try:
-                lm = LDAPMod(mode, attr, attrs[attr])
+                if mode == LDAP_MOD_DELETE:
+                    lm = LDAPMod(mode, attr)
+                else:
+                    lm = LDAPMod(mode, attr, attrs[attr])
             except Exception as msg:
                 raise LDAPError(
                     "%s.__init__(): `%s': %s" %
