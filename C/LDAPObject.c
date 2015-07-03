@@ -476,6 +476,34 @@ LDAPObject_modify_ext_s(LDAPObject *self, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(LDAPObjectDoc_modrdn2_s, "");
+
+static PyObject *
+LDAPObject_modrdn2_s(LDAPObject *self, PyObject *args, PyObject *kwds)
+{
+    char *dn, *newrdn;
+    int ecode, deleteoldrdn;
+    PyObject *py_deleteoldrdn = Py_False;
+    static char *kwlist[] = {"dn", "newrdn", "deleteoldrdn", NULL};
+
+    if (!LDAPObject_conn_valid((PyObject *) self, "modrdn2_s"))
+	return NULL;
+    if (!PyArg_ParseTupleAndKeywords(
+	    args, kwds, "ss|O!", kwlist, &dn, &newrdn, &PyBool_Type,
+	    &py_deleteoldrdn))
+	return NULL;
+    dn = (char *) LDAPObject_complete_dn(dn, self->dn);
+    deleteoldrdn = py_deleteoldrdn == Py_False ? 0 : 1;
+    ecode = ldap_modrdn2_s(self->ldp, dn, newrdn, deleteoldrdn);
+    if (ecode != LDAP_SUCCESS)
+	return PyErr_Format(
+	    LibLDAPErr, "%s.modrdn2_s(): "
+	    "ldap_modrdn2_s(): %s", LDAPObjName(self),
+	    ldap_err2string(ecode)
+	    );
+    Py_RETURN_NONE;
+}
+
 PyDoc_STRVAR(LDAPObjectDoc_create_sort_control, "");
 
 static PyObject *
@@ -590,6 +618,9 @@ static PyMethodDef LDAPObjectMethods[] = {
     },
     {"modify_ext_s", (PyCFunction) LDAPObject_modify_ext_s,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_modify_ext_s
+    },
+    {"modrdn2_s", (PyCFunction) LDAPObject_modrdn2_s,
+     METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_modrdn2_s
     },
     {"create_sort_control", (PyCFunction) LDAPObject_create_sort_control,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_create_sort_control

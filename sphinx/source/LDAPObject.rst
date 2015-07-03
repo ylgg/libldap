@@ -300,6 +300,18 @@ LDAPObject classes
       :py:meth:`ldap_str2objectclass`. See section
       :ref:`schema_parsing_functions` for more details
 
+   .. py:method:: modrdn2_s(dn, newrdn [, deleteoldrdn=False])
+
+      Performs an LDAP modify RDN operation
+
+      :param str dn: the DN of the entry whose RDN is to be changed
+      :param str newrdn: the new RDN
+      :param bool deleteoldrdn: if :py:const:`True`, the old RDN values
+       are deleted from the entry
+
+      .. seealso::
+         :manpage:`ldap_modrdn2_s(3)`
+
    .. _control-methods:
 
    .. rubric:: Control methods
