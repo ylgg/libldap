@@ -6,6 +6,10 @@
 #include <ldap_schema.h>
 #include <LDAPSchema.h>
 
+#ifdef __APPLE__
+ extern PyObject *LibLDAPErr;
+#endif
+
 /*****************************************************************************
  * LOCAL FUNCTION DECLARATIONS
  *****************************************************************************/

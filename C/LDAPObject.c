@@ -9,6 +9,10 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#ifdef __APPLE__
+ extern PyObject *LibLDAPErr;
+#endif
+
 /*****************************************************************************
  * LOCAL VARIABLES
  *****************************************************************************/

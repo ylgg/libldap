@@ -5,6 +5,10 @@
 #include <libldap.h>
 #include <LDAPModObject.h>
 
+#ifdef __APPLE__
+ extern PyObject *LibLDAPErr;
+#endif
+
 /*****************************************************************************
  * libldap.LDAPMod OBJECT
  *****************************************************************************/
