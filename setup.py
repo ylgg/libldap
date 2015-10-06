@@ -11,7 +11,6 @@ include_dirs=['C', '/usr/local/include']
 define_macros=[('LDAP_DEPRECATED', 1)]
 
 if os.uname()[0] == 'Darwin':
-    include_dirs.append('/usr/local/include/openldap')
     define_macros.append(('__APPLE__', 1))
 
 libldap_module = Extension(
