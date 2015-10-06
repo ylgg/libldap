@@ -10,7 +10,7 @@
 #include <netdb.h>
 
 #ifdef __APPLE__
- extern PyObject *LibLDAPErr;
+extern PyObject *LibLDAPErr;
 #endif
 
 /*****************************************************************************

@@ -3,7 +3,16 @@
 PKG_NAME = 'libldap'
 PKG_VERS = '0.1'
 
+import os
+
 from setuptools import setup, Extension
+
+include_dirs=['C', '/usr/local/include']
+define_macros=[('LDAP_DEPRECATED', 1)]
+
+if os.uname()[0] == 'Darwin':
+    include_dirs.append('/usr/local/include/openldap')
+    define_macros.append(('__APPLE__', 1))
 
 libldap_module = Extension(
     '_' + PKG_NAME,
@@ -15,9 +24,10 @@ libldap_module = Extension(
         'C/libldap.h', 'C/LDAPObject.h', 'C/LDAPModObject.h', 'C/LDAPSchema.h',
         'C/LDAPControls.h'
         ],
-    include_dirs=['C', '/usr/local/include'],
+    include_dirs=include_dirs,
     libraries=['ldap'],
-    define_macros=[('LDAP_DEPRECATED', 1)]
+    define_macros=define_macros,
+    extra_link_args=extra_link_args
     )
 
 setup(

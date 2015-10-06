@@ -10,7 +10,7 @@
 #include <LDAPSchema.h>
 
 #ifdef __APPLE__
-   PyObject *LibLDAPErr;
+PyObject *LibLDAPErr;
 #endif
 
 /*****************************************************************************
