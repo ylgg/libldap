@@ -26,8 +26,7 @@ libldap_module = Extension(
         ],
     include_dirs=include_dirs,
     libraries=['ldap'],
-    define_macros=define_macros,
-    extra_link_args=extra_link_args
+    define_macros=define_macros
     )
 
 setup(
