@@ -9,7 +9,7 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
-#ifdef __APPLE__
+#ifdef __LIBLDAP_DARWIN__
 extern PyObject *LibLDAPErr;
 #endif
 

@@ -7,11 +7,9 @@ import os
 
 from setuptools import setup, Extension
 
-include_dirs=['C', '/usr/local/include']
 define_macros=[('LDAP_DEPRECATED', 1)]
-
 if os.uname()[0] == 'Darwin':
-    define_macros.append(('__APPLE__', 1))
+    define_macros.append(('__LIBLDAP_DARWIN__', 1))
 
 libldap_module = Extension(
     '_' + PKG_NAME,
@@ -23,7 +21,7 @@ libldap_module = Extension(
         'C/libldap.h', 'C/LDAPObject.h', 'C/LDAPModObject.h', 'C/LDAPSchema.h',
         'C/LDAPControls.h'
         ],
-    include_dirs=include_dirs,
+    include_dirs=['C', '/usr/local/include'],
     libraries=['ldap'],
     define_macros=define_macros
     )

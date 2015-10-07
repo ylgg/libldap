@@ -9,7 +9,7 @@
 #include <LDAPControls.h>
 #include <LDAPSchema.h>
 
-#ifdef __APPLE__
+#ifdef __LIBLDAP_DARWIN__
 PyObject *LibLDAPErr;
 #endif
 

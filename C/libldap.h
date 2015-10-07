@@ -16,7 +16,7 @@
  * GLOBAL VARIABLES
  *****************************************************************************/
 
-#ifndef __APPLE__
+#ifndef __LIBLDAP_DARWIN__
 PyObject *LibLDAPErr;
 #endif
 

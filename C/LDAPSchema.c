@@ -6,7 +6,7 @@
 #include <ldap_schema.h>
 #include <LDAPSchema.h>
 
-#ifdef __APPLE__
+#ifdef __LIBLDAP_DARWIN__
 extern PyObject *LibLDAPErr;
 #endif
 
