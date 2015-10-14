@@ -5,7 +5,7 @@
 #include <libldap.h>
 #include <LDAPControls.h>
 
-#ifdef __APPLE__
+#ifdef __LIBLDAP_DARWIN__
 extern PyObject *LibLDAPErr;
 #endif
 
