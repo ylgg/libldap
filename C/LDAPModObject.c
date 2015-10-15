@@ -3,6 +3,8 @@
  *****************************************************************************/
 
 #include <libldap.h>
+#include <locale.h>
+#include <wchar.h>
 #include <LDAPModObject.h>
 
 #ifdef __LIBLDAP_DARWIN__
@@ -117,6 +119,7 @@ LDAPModObject_init(LDAPModObject *self, PyObject *args, PyObject *kwds)
     (void) strcpy(self->mod->mod_type, mod_type);
     if (PyList_Check(values)) {
 	char **ptr;
+        wchar_t *tmp;
 	Py_ssize_t i, len = PyList_GET_SIZE(values);
 
 	if (!len) {
@@ -132,7 +135,8 @@ LDAPModObject_init(LDAPModObject *self, PyObject *args, PyObject *kwds)
 	    return -1;
 	}
 	self->mod->mod_values[len] = NULL;
-	for (i = 0, ptr = self->mod->mod_values; i < len; i++, ptr++) {
+        setlocale(LC_ALL, "");
+	for (i = 0, ptr=self->mod->mod_values; i < len; i++, ptr++) {
 	    PyObject *py_value = PyList_GET_ITEM(values, i);
 	    Py_ssize_t l;
 	    
@@ -146,15 +150,16 @@ LDAPModObject_init(LDAPModObject *self, PyObject *args, PyObject *kwds)
 		    );
 		return -1;
 	    }
-	    l = PyUnicode_GET_LENGTH(py_value);
-	    *ptr = PyMem_New(char, l + 1);
-	    if (!*ptr) {
+            tmp=PyUnicode_AsWideCharString(py_value,&l);
+	    *ptr = PyMem_New(char, 2*l);
+	    if (!*ptr || !tmp) {
 		LibLDAP_value_free((void **) self->mod->mod_values);
 		PyErr_SetNone(PyExc_MemoryError);
 		return -1;
 	    }
-	    (void) memcpy((void *) *ptr, PyUnicode_DATA(py_value), l);
-	    (*ptr)[l] = 0;
+
+            wcstombs(*ptr,tmp,2*l);
+            PyMem_Free((void*)tmp);
 	}
     }
     return 0;
