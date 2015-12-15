@@ -12,7 +12,7 @@ if os.uname()[0] == 'Darwin':
     define_macros.append(('__LIBLDAP_DARWIN__', 1))
 
 libldap_module = Extension(
-    '_' + PKG_NAME,
+    '_libldap',
     sources=[
         'C/libldap.c', 'C/LDAPObject.c', 'C/LDAPModObject.c', 'C/LDAPSchema.c',
         'C/LDAPControls.c'

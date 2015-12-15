@@ -27,16 +27,16 @@ Full documentation is located at [ReadTheDocs](http://libldap.readthedocs.org/en
 ```
      $ python3 setup.py build_sphinx --source-dir sphinx/source --build-dir doc
 ```
-     and you will find the documentation generated in subdirectory doc/html.
+
+and you will find the documentation generated in subdirectory doc/html.
   3. As `root`, type:
 ```
      $ python3 setup.py install
 ```
-  4. Optionally, you can type:
+  4. Optionally, you can type to save disk space:
 ```
      $ python3 setup.py clean
 ```
-     to save disk space.
 
 ## License information
 
