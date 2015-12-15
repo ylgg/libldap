@@ -1,0 +1,5 @@
+build/*
+dist/*
+_libldap*.so
+sphinx/build/*
+py3_libldap.egg-info/*
