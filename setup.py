@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
+PKG_DIST = 'py3-libldap'
 PKG_NAME = 'libldap'
-PKG_VERS = '0.1'
+PKG_VERS = '1.2'
 
 import os
 
@@ -27,7 +28,7 @@ libldap_module = Extension(
     )
 
 setup(
-    name=PKG_NAME,
+    name=PKG_DIST,
     version=PKG_VERS,
     description='OpenLDAP library wrapper',
     author='Yves Legrandgerard',

@@ -1,4 +1,4 @@
-libldap module - a wrapper for OpenLDAP library - version 0.1
+libldap module - a wrapper for OpenLDAP library - version 1.2
 =============================================================
 
 Description
@@ -53,4 +53,4 @@ Author
 ======
 
 Yves Legrandgerard
-email: ylg@pps.univ-paris-diderot.fr
+email: ylg@irif.fr
