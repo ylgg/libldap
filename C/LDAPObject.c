@@ -154,7 +154,11 @@ PyDoc_STRVAR(LDAPObjectDoc_get_option, "");
 static PyObject *
 LDAPObject_get_option(LDAPObject *self, PyObject *args)
 {
-    int ecode, opt, optval;
+    int ecode, opt;
+    union {
+	int   ival;
+	char **cval;
+    } optval;
     LDAP *ldp = self ? self->ldp : NULL;
     
     if (!PyArg_ParseTuple(args, "i", &opt))
@@ -162,20 +166,45 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
     switch (opt) {
     case LDAP_OPT_PROTOCOL_VERSION:
     case LDAP_OPT_X_TLS_REQUIRE_CERT:
-	ecode = ldap_get_option(ldp, opt, (void *) &optval);
+	ecode = ldap_get_option(ldp, opt, (void *) &optval.ival);
 	if (ecode != LDAP_OPT_SUCCESS)
-	    return PyErr_Format(
-		LibLDAPErr,"%s.get_option(): ldap_get_option() failed",
-		LDAPObjName(self)
-		);
-	break;
+	    goto failed;
+	return Py_BuildValue("i", optval.ival);
+    case LDAP_OPT_X_SASL_MECHLIST:
+    {
+	Py_ssize_t len = 0;
+	PyObject *ret;
+	
+	ecode = ldap_get_option(ldp, opt, (void *) &optval.cval);
+	if (ecode != LDAP_OPT_SUCCESS)
+	    goto failed;
+	for (char **p = optval.cval; *p; p++, len++);
+	ret = PyTuple_New(len);
+	if (!ret)
+	    return NULL;
+	for (char **p = optval.cval; *p; p++) {
+	    PyObject *val;
+
+	    val = Py_BuildValue("s", *p);
+	    if (!val) {
+		Py_DECREF(ret);
+		return NULL;
+	    }
+	    PyTuple_SET_ITEM(ret, p - optval.cval, val);
+	}
+	return ret;
+    }
     default:
 	return PyErr_Format(
 	    LibLDAPErr, "%s.get_option(): `%d': option not supported",
 	    LDAPObjName(self)
 	    );
     }
-    return Py_BuildValue("i", optval);
+  failed:
+    return PyErr_Format(
+	LibLDAPErr,"%s.get_option(): ldap_get_option() failed",
+	LDAPObjName(self)
+	);
 }
 
 PyDoc_STRVAR(LDAPObjectDoc_set_option, "");

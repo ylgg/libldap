@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-PKG_DIST = 'py3-libldap'
+PKG_DIST = 'libldap'
 PKG_NAME = 'libldap'
 PKG_VERS = '1.2'
 
