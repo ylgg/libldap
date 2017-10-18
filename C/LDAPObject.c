@@ -27,6 +27,7 @@ static const char *ldap_url_err2string(int);
 static const char *LDAPObject_complete_dn(const char *, PyObject *);
 static LDAPMod **LDAPObject_mods_parse(LDAPObject *, PyObject *, const char *);
 static int LDAPObject_conn_valid(PyObject *, const char *);
+static int sasl_parse_mechs(PyObject *, char **);
 
 /*****************************************************************************
  * libldap.LDAP OBJECT
@@ -94,6 +95,35 @@ LDAPObject_bind_s(LDAPObject *self, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(LDAPObjectDoc_sasl_interactive_bind_s, "");
+
+static PyObject *
+LDAPObject_sasl_interactive_bind_s(
+    LDAPObject *self, PyObject *args, PyObject *kwds
+    )
+{
+    char *mechs = NULL;
+    unsigned int flags = LDAP_SASL_QUIET;
+    static char *kwlist[] = {"mechs", "flags", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(
+	    args, kwds, "|O&I", kwlist, sasl_parse_mechs, &mechs, &flags))
+	return NULL;
+    printf("%s\n", mechs ? mechs : "null");
+    switch (flags) {
+    case LDAP_SASL_AUTOMATIC:
+    case LDAP_SASL_INTERACTIVE:
+    case LDAP_SASL_QUIET:
+	break;
+    default:
+	return PyErr_Format(
+	    LibLDAPErr, "%s.sasl_interactive_bind_s(): invalid value `%u' "
+	    "for parameter `flags'", LDAPObjName(self), flags
+	    );
+    }
+    Py_RETURN_NONE;
+}
+
 PyDoc_STRVAR(LDAPObjectDoc_unbind_s, "");
 
 static PyObject *
@@ -156,8 +186,8 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
 {
     int ecode, opt;
     union {
-	int   ival;
-	char **cval;
+	int    ival;
+	char **lval;
     } optval;
     LDAP *ldp = self ? self->ldp : NULL;
     
@@ -175,14 +205,14 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
 	Py_ssize_t len = 0;
 	PyObject *ret;
 	
-	ecode = ldap_get_option(ldp, opt, (void *) &optval.cval);
+	ecode = ldap_get_option(ldp, opt, (void *) &optval.lval);
 	if (ecode != LDAP_OPT_SUCCESS)
 	    goto failed;
-	for (char **p = optval.cval; *p; p++, len++);
+	for (char **p = optval.lval; *p; p++, len++);
 	ret = PyTuple_New(len);
 	if (!ret)
 	    return NULL;
-	for (char **p = optval.cval; *p; p++) {
+	for (char **p = optval.lval; *p; p++) {
 	    PyObject *val;
 
 	    val = Py_BuildValue("s", *p);
@@ -190,7 +220,7 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
 		Py_DECREF(ret);
 		return NULL;
 	    }
-	    PyTuple_SET_ITEM(ret, p - optval.cval, val);
+	    PyTuple_SET_ITEM(ret, p - optval.lval, val);
 	}
 	return ret;
     }
@@ -625,6 +655,10 @@ static PyMethodDef LDAPObjectMethods[] = {
     {"bind_s", (PyCFunction) LDAPObject_bind_s,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_bind_s
     },
+    {"sasl_interactive_bind_s",
+     (PyCFunction) LDAPObject_sasl_interactive_bind_s,
+     METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_sasl_interactive_bind_s
+    },
     {"unbind_s", (PyCFunction) LDAPObject_unbind_s, METH_NOARGS,
      LDAPObjectDoc_unbind_s
     },
@@ -1057,5 +1091,68 @@ LDAPObject_conn_valid(PyObject *pyo, const char *func)
 	    );
 	return 0;
     }
+    return 1;
+}
+
+static int
+sasl_parse_mechs(PyObject *obj, char **mechs)
+{
+    Py_ssize_t size;
+    PyObject * (*get_item)(PyObject *, Py_ssize_t);
+    
+    if (PyList_Check(obj)) {
+	size = PyList_GET_SIZE(obj);
+	get_item = PyList_GetItem;
+    }
+    else if (PyTuple_Check(obj)) {
+	size = PyTuple_GET_SIZE(obj);
+	get_item = PyTuple_GetItem;
+    }
+    else {
+	(void) PyErr_Format(
+	    PyExc_TypeError, "parameter `mechs' must be a list or a tuple"
+	    );
+	return 0;
+    }
+    *mechs = NULL;
+    for (Py_ssize_t i = 0, tlen = 0; i < size; i++) {
+	char *ptr, *mech;
+	Py_ssize_t len;
+	PyObject *pyo_mech = get_item(obj, i);
+	
+    	if (!PyUnicode_Check(pyo_mech)) {
+	    (void) PyErr_Format(
+		PyExc_TypeError,
+		"parameter `mechs' must be a list or a tuple of strings"
+		);
+	    PyMem_Free(*mechs);
+	    return 0;
+	}
+	len = PyUnicode_GET_LENGTH(pyo_mech);
+	if (!len)
+	    continue;
+	ptr = PyMem_Realloc(*mechs, tlen + len + 1);
+	if (!ptr) {
+	    PyMem_Free(*mechs);
+	    return 1;
+	}
+	*mechs = ptr;
+	pyo_mech  = PyUnicode_AsASCIIString(pyo_mech);
+	if (!pyo_mech) {
+	    (void) PyErr_Format(
+		PyExc_TypeError,
+		"parameter `mechs': mechs[%zu] is not an ASCII string", i
+		);
+	    PyMem_Free(*mechs);
+	    return 0;
+	}
+	mech = PyBytes_AS_STRING(pyo_mech);
+	Py_DECREF(pyo_mech);
+	(void) strcpy(*mechs + tlen, mech);
+	tlen += len + 1;
+	(*mechs)[tlen - 1] = i == size - 1 ? 0 : ' ';
+    }
+    for (char *p = *mechs; p - *mechs < strlen(*mechs); p++)
+	*p = toupper(*p);
     return 1;
 }

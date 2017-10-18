@@ -249,6 +249,12 @@ LibLDAP_add_constants(PyObject *m)
     if (PyModule_AddIntMacro(m, LDAP_DN_FORMAT_DCE) < 0)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_DN_PEDANTIC) < 0)
-	return -1;    
+	return -1;
+    if (PyModule_AddIntMacro(m, LDAP_SASL_AUTOMATIC) < 0)
+	return -1;
+    if (PyModule_AddIntMacro(m, LDAP_SASL_INTERACTIVE) < 0)
+	return -1;
+    if (PyModule_AddIntMacro(m, LDAP_SASL_QUIET) < 0)
+	return -1;
     return 0;
 }
