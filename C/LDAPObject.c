@@ -121,6 +121,7 @@ LDAPObject_sasl_interactive_bind_s(
 	    "for parameter `flags'", LDAPObjName(self), flags
 	    );
     }
+    PyMem_Free(mechs);
     Py_RETURN_NONE;
 }
 
