@@ -8,10 +8,20 @@
 #include <LDAPControls.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <sasl/sasl.h>
+#include <termios.h>
+#include <unistd.h>
 
 #ifdef __LIBLDAP_DARWIN__
 extern PyObject *LibLDAPErr;
 #endif
+
+typedef struct {
+    char       *authname;
+    char       *user;
+    char       *realm;
+    BerValue    cred;
+} SASLAuth_t;
 
 /*****************************************************************************
  * LOCAL VARIABLES
@@ -28,6 +38,9 @@ static const char *LDAPObject_complete_dn(const char *, PyObject *);
 static LDAPMod **LDAPObject_mods_parse(LDAPObject *, PyObject *, const char *);
 static int LDAPObject_conn_valid(PyObject *, const char *);
 static int sasl_parse_mechs(PyObject *, char **);
+static int sasl_interact(LDAP *, unsigned int, void *, void *);
+static int sasl_input_name(char **);
+static int sasl_input_cred(BerValue *);
 
 /*****************************************************************************
  * libldap.LDAP OBJECT
@@ -102,26 +115,52 @@ LDAPObject_sasl_interactive_bind_s(
     LDAPObject *self, PyObject *args, PyObject *kwds
     )
 {
+    int ecode;
     char *mechs = NULL;
-    unsigned int flags = LDAP_SASL_QUIET;
-    static char *kwlist[] = {"mechs", "flags", NULL};
+    unsigned int flags = -1;
+    SASLAuth_t dflts = {
+	.authname = NULL,
+	.user = NULL,
+	.realm = NULL,
+	.cred = {.bv_val = NULL, .bv_len = 0}
+    };
+    static char *kwlist[] = {"mechs", "flags", "user", "password", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(
-	    args, kwds, "|O&I", kwlist, sasl_parse_mechs, &mechs, &flags))
+    if (!LDAPObject_conn_valid((PyObject *) self, "sasl_interactive_bind_s"))
 	return NULL;
-    printf("%s\n", mechs ? mechs : "null");
-    switch (flags) {
-    case LDAP_SASL_AUTOMATIC:
-    case LDAP_SASL_INTERACTIVE:
-    case LDAP_SASL_QUIET:
-	break;
-    default:
-	return PyErr_Format(
-	    LibLDAPErr, "%s.sasl_interactive_bind_s(): invalid value `%u' "
-	    "for parameter `flags'", LDAPObjName(self), flags
-	    );
+    if (!PyArg_ParseTupleAndKeywords(
+	    args, kwds, "|O&Iss#", kwlist, sasl_parse_mechs, &mechs, &flags,
+	    &dflts.authname, &dflts.cred.bv_val, &dflts.cred.bv_len))
+	return NULL;
+    if (flags == -1) {
+	if (!dflts.authname || !dflts.cred.bv_val)
+	    flags = LDAP_SASL_INTERACTIVE;
+	else
+	    flags = LDAP_SASL_QUIET;
     }
+    else { 
+	switch (flags) {
+	case LDAP_SASL_AUTOMATIC:
+	case LDAP_SASL_INTERACTIVE:
+	case LDAP_SASL_QUIET:
+	break;
+	default:
+	    PyMem_Free(mechs);
+	    return PyErr_Format(
+		LibLDAPErr, "%s.sasl_interactive_bind_s(): invalid value `%u' "
+		"for parameter `flags'", LDAPObjName(self), flags
+		);
+	}
+    }
+    ecode = ldap_sasl_interactive_bind_s(
+	self->ldp, NULL, mechs, NULL, NULL, flags, sasl_interact, &dflts); 
     PyMem_Free(mechs);
+    if (ecode != LDAP_SUCCESS)
+	return PyErr_Format(
+	    LibLDAPErr,
+	    "%s.sasl_interactive_bind_s(): ldap_sasl_interactive_bind_s(): %s",
+	    LDAPObjName(self), ldap_err2string(ecode)
+	    );
     Py_RETURN_NONE;
 }
 
@@ -1099,7 +1138,7 @@ static int
 sasl_parse_mechs(PyObject *obj, char **mechs)
 {
     Py_ssize_t size;
-    PyObject * (*get_item)(PyObject *, Py_ssize_t);
+    PyObject *(*get_item)(PyObject *, Py_ssize_t);
     
     if (PyList_Check(obj)) {
 	size = PyList_GET_SIZE(obj);
@@ -1156,4 +1195,92 @@ sasl_parse_mechs(PyObject *obj, char **mechs)
     for (char *p = *mechs; p - *mechs < strlen(*mechs); p++)
 	*p = toupper(*p);
     return 1;
+}
+
+static int
+sasl_interact(LDAP *ldp, unsigned int flag, void *dflts, void *sin)
+{
+    SASLAuth_t *auth = dflts;
+    sasl_interact_t *iact;
+
+    if (!auth || !sin)
+	return LDAP_PARAM_ERROR;
+    for (iact = sin; iact->id != SASL_CB_LIST_END; iact++) {
+	iact->result = NULL;
+	iact->len = 0;
+	switch (iact->id) {
+	case SASL_CB_GETREALM:
+	    iact->result = auth->realm ? auth->realm : "";
+            iact->len = (unsigned int ) strlen(iact->result);
+            break;
+	case SASL_CB_AUTHNAME:
+	    if (sasl_input_name(&auth->authname) < 0)
+		return LDAP_LOCAL_ERROR;
+            iact->result = auth->authname;
+            iact->len = (unsigned int ) strlen(iact->result);
+            break;
+	case SASL_CB_PASS:
+	    if (sasl_input_cred(&auth->cred) < 0)
+		return LDAP_LOCAL_ERROR;
+            iact->result = auth->cred.bv_val;
+            iact->len = (unsigned int) auth->cred.bv_len;
+            break;
+         case SASL_CB_USER:
+            iact->result = auth->user ? auth->user : "";
+            iact->len = (unsigned int ) strlen(iact->result);
+            break;
+	case SASL_CB_NOECHOPROMPT:
+	case SASL_CB_ECHOPROMPT:
+            break;
+	default:
+	    fprintf(
+		stderr, "%s() asked for unknown id: %lu\n", __func__, iact->id
+		);
+	    break;
+	}
+    }
+    return LDAP_SUCCESS;
+}
+
+static int
+sasl_input_name(char **dest)
+{
+    ssize_t len;
+    size_t n = 0;
+    
+    if (*dest)
+	return 0;
+    fprintf(stdout, "Enter user's name: ");
+    len = getline(dest, &n, stdin);
+    if (len < 0) {
+	free(*dest);
+	return -1;
+    }
+    (*dest)[len - 1] = 0;
+    return 0;
+}
+
+static int
+sasl_input_cred(BerValue *cred)
+{
+    ssize_t len;
+    size_t n = 0;
+    struct termios ts;
+    
+    if (cred->bv_val)
+	return 0;
+    fprintf(stdout, "Enter user's password: ");
+    tcgetattr(0, &ts);
+    ts.c_lflag &= ~ECHO;
+    (void) tcsetattr(0, TCSAFLUSH, &ts);
+    len = getline(&cred->bv_val, &n, stdin);
+    ts.c_lflag |= ECHO;
+    (void) tcsetattr(0, TCSANOW, &ts);
+    if (len < 0) {
+	free(cred->bv_val);
+	return -1;
+    }
+    (cred->bv_val)[len - 1] = 0;
+    cred->bv_len = (ber_len_t) (len - 1);
+    return 0;
 }
