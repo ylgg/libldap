@@ -115,7 +115,7 @@ LDAPObject_sasl_interactive_bind_s(
     LDAPObject *self, PyObject *args, PyObject *kwds
     )
 {
-    int ecode;
+    int ecode, uflag, pflag;
     char *mechs = NULL;
     unsigned int flags = -1;
     SASLAuth_t dflts = {
@@ -152,8 +152,16 @@ LDAPObject_sasl_interactive_bind_s(
 		);
 	}
     }
+    uflag = dflts.authname ? 0 : 1;
+    pflag = dflts.cred.bv_val ? 0 : 1;
     ecode = ldap_sasl_interactive_bind_s(
-	self->ldp, NULL, mechs, NULL, NULL, flags, sasl_interact, &dflts); 
+	self->ldp, NULL, mechs, NULL, NULL, flags, sasl_interact, &dflts);
+    if (uflag)
+	free(dflts.authname);
+    if (pflag) {
+	(void) memset(dflts.cred.bv_val, 0, dflts.cred.bv_len);
+	free(dflts.cred.bv_val);
+    }
     PyMem_Free(mechs);
     if (ecode != LDAP_SUCCESS)
 	return PyErr_Format(
