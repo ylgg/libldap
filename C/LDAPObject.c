@@ -143,7 +143,7 @@ LDAPObject_sasl_interactive_bind_s(
 	case LDAP_SASL_AUTOMATIC:
 	case LDAP_SASL_INTERACTIVE:
 	case LDAP_SASL_QUIET:
-	break;
+	    break;
 	default:
 	    PyMem_Free(mechs);
 	    return PyErr_Format(
@@ -1260,10 +1260,8 @@ sasl_input_name(char **dest)
 	return 0;
     fprintf(stdout, "Enter user's name: ");
     len = getline(dest, &n, stdin);
-    if (len < 0) {
-	free(*dest);
+    if (len < 0)
 	return -1;
-    }
     (*dest)[len - 1] = 0;
     return 0;
 }
@@ -1284,10 +1282,8 @@ sasl_input_cred(BerValue *cred)
     len = getline(&cred->bv_val, &n, stdin);
     ts.c_lflag |= ECHO;
     (void) tcsetattr(0, TCSANOW, &ts);
-    if (len < 0) {
-	free(cred->bv_val);
+    if (len < 0)
 	return -1;
-    }
     (cred->bv_val)[len - 1] = 0;
     cred->bv_len = (ber_len_t) (len - 1);
     return 0;
