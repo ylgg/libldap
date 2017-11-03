@@ -19,21 +19,24 @@ Basic Installation
   0. You need to have OpenLDAP library and file `/usr/include/ldap.h'
      installed on your system
 
-  1. `cd' to the toplevel directory of the package and run the command:
+  1. You need to have SASL library and file `/usr/include/sasl/sasl.h'
+
+  2. `cd' to the toplevel directory of the package and run the command:
 
      $ python3 setup.py build
 
-  2. To (re)make html documentation, run:
+  3. To (re)make html documentation, run (you need `sphinx' tool for Python3,
+     see http://sphinx-doc.org):
 
      $ python3 setup.py build_sphinx --source-dir sphinx/source --build-dir doc
 
      and you will find the documentation generated in subdirectory doc/html.
 
-  3. As `root', type:
+  4. As `root', type:
 
      $ python3 setup.py install
 
-  4. Optionally, you can type:
+  5. Optionally, you can type:
 
      $ python3 setup.py clean
 

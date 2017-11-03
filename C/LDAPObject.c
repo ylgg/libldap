@@ -39,8 +39,8 @@ static LDAPMod **LDAPObject_mods_parse(LDAPObject *, PyObject *, const char *);
 static int LDAPObject_conn_valid(PyObject *, const char *);
 static int sasl_parse_mechs(PyObject *, char **);
 static int sasl_interact(LDAP *, unsigned int, void *, void *);
-static int sasl_input_name(char **);
-static int sasl_input_cred(BerValue *);
+static int sasl_input_name(char **, const char *);
+static int sasl_input_cred(BerValue *, const char *);
 
 /*****************************************************************************
  * libldap.LDAP OBJECT
@@ -105,6 +105,68 @@ LDAPObject_bind_s(LDAPObject *self, PyObject *args, PyObject *kwds)
 	    LibLDAPErr, "%s.bind_s(): ldap_bind_s(): %s",
 	    LDAPObjName(self), ldap_err2string(ecode)
 	    );
+    Py_RETURN_NONE;
+}
+
+PyDoc_STRVAR(LDAPObjectDoc_sasl_bind_s, "");
+
+static PyObject *
+LDAPObject_sasl_bind_s(LDAPObject *self, PyObject *args, PyObject *kwds)
+{
+    int ecode, dflag, pflag;
+    char *dn = NULL, *mech = LDAP_SASL_SIMPLE;
+    struct berval cred = {.bv_val = NULL, .bv_len = 0}, *servercredp;
+    LDAPDN ldn;
+    static char *kwlist[] = {"mech", "dn", "password", NULL};
+    
+    if (!LDAPObject_conn_valid((PyObject *) self, "sasl__bind_s"))
+	return NULL;
+    if (!PyArg_ParseTupleAndKeywords(
+	    args, kwds, "|sss#", kwlist, &mech, &dn, &cred.bv_val,
+	    &cred.bv_len))
+	return NULL;
+    for (char *p = mech; p && *p; p++)
+	*p = toupper(*p);
+    dflag = dn ? 0 : 1;
+    pflag = cred.bv_val ? 0 : 1;
+    if (sasl_input_name(&dn, "Enter DN: ") < 0)
+	return PyErr_Format(
+	    LibLDAPErr, "%s.sasl_bind_s(): can't get DN",
+	    LDAPObjName(self)
+	    );
+    ecode = ldap_str2dn(dn, &ldn, LDAP_DN_FORMAT_LDAPV3);
+    ldap_dnfree(ldn);
+    if (ecode != LDAP_SUCCESS) {
+	if (dflag)
+	    free(dn);
+	return PyErr_Format(
+	    LibLDAPErr,
+	    "%s.sasl_bind_s(): invalid DN: %s", LDAPObjName(self),
+	    ldap_err2string(ecode)
+	    );
+    }
+    if (sasl_input_cred(&cred, "Enter password: ") < 0) {
+	if (dflag)
+	    free(dn);
+	return PyErr_Format(
+	    LibLDAPErr, "%s.sasl_bind_s(): can't get password",
+	    LDAPObjName(self)
+	    );
+    }
+    ecode = ldap_sasl_bind_s(
+	self->ldp, dn, mech, &cred, NULL, NULL, &servercredp);
+    if (dflag)
+	free(dn);
+    if (pflag) {
+	(void) memset(cred.bv_val, 0, cred.bv_len);
+	free(cred.bv_val);
+    }
+    if (ecode != LDAP_SUCCESS)
+	return PyErr_Format(
+	    LibLDAPErr,
+	    "%s.sasl_bind_s(): ldap_sasl_bind_s(): %s", LDAPObjName(self),
+	    ldap_err2string(ecode)
+	    );    
     Py_RETURN_NONE;
 }
 
@@ -235,6 +297,7 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
     int ecode, opt;
     union {
 	int    ival;
+	char  *mech;
 	char **lval;
     } optval;
     LDAP *ldp = self ? self->ldp : NULL;
@@ -248,6 +311,17 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
 	if (ecode != LDAP_OPT_SUCCESS)
 	    goto failed;
 	return Py_BuildValue("i", optval.ival);
+    case LDAP_OPT_X_SASL_MECH:
+    {
+	PyObject *ret;
+	
+	ecode = ldap_get_option(ldp, opt, (void *) &optval.mech);
+	if (ecode != LDAP_OPT_SUCCESS)
+	    goto failed;
+	ret = Py_BuildValue("s", optval.mech);
+	ldap_memfree(optval.mech);
+	return ret;
+    }
     case LDAP_OPT_X_SASL_MECHLIST:
     {
 	Py_ssize_t len = 0;
@@ -702,6 +776,9 @@ static PyMethodDef LDAPObjectMethods[] = {
     },
     {"bind_s", (PyCFunction) LDAPObject_bind_s,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_bind_s
+    },
+    {"sasl_bind_s", (PyCFunction) LDAPObject_sasl_bind_s,
+     METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_sasl_bind_s
     },
     {"sasl_interactive_bind_s",
      (PyCFunction) LDAPObject_sasl_interactive_bind_s,
@@ -1222,13 +1299,13 @@ sasl_interact(LDAP *ldp, unsigned int flag, void *dflts, void *sin)
             iact->len = (unsigned int ) strlen(iact->result);
             break;
 	case SASL_CB_AUTHNAME:
-	    if (sasl_input_name(&auth->authname) < 0)
+	    if (sasl_input_name(&auth->authname, "Enter user's name: ") < 0)
 		return LDAP_LOCAL_ERROR;
             iact->result = auth->authname;
             iact->len = (unsigned int ) strlen(iact->result);
             break;
 	case SASL_CB_PASS:
-	    if (sasl_input_cred(&auth->cred) < 0)
+	    if (sasl_input_cred(&auth->cred, "Enter user's password: ") < 0)
 		return LDAP_LOCAL_ERROR;
             iact->result = auth->cred.bv_val;
             iact->len = (unsigned int) auth->cred.bv_len;
@@ -1251,14 +1328,14 @@ sasl_interact(LDAP *ldp, unsigned int flag, void *dflts, void *sin)
 }
 
 static int
-sasl_input_name(char **dest)
+sasl_input_name(char **dest, const char *prompt)
 {
     ssize_t len;
     size_t n = 0;
     
     if (*dest)
 	return 0;
-    fprintf(stdout, "Enter user's name: ");
+    fprintf(stdout, "%s", prompt);
     len = getline(dest, &n, stdin);
     if (len < 0)
 	return -1;
@@ -1267,7 +1344,7 @@ sasl_input_name(char **dest)
 }
 
 static int
-sasl_input_cred(BerValue *cred)
+sasl_input_cred(BerValue *cred, const char *prompt)
 {
     ssize_t len;
     size_t n = 0;
@@ -1275,7 +1352,7 @@ sasl_input_cred(BerValue *cred)
     
     if (cred->bv_val)
 	return 0;
-    fprintf(stdout, "Enter user's password: ");
+    fprintf(stdout, "%s", prompt);
     tcgetattr(0, &ts);
     ts.c_lflag &= ~ECHO;
     (void) tcsetattr(0, TCSAFLUSH, &ts);

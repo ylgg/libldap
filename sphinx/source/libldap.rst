@@ -257,6 +257,23 @@ Scope constants
 
    search all of the descendants
 
+.. _libldap-sasl-constants:
+   
+SASL constants
+::::::::::::::
+
+.. py:data:: LDAP_SASL_AUTOMATIC
+
+   use defaults if available, prompt otherwise
+
+.. py:data:: LDAP_SASL_INTERACTIVE
+
+   always prompt
+
+.. py:data:: LDAP_SASL_QUIET
+
+   never prompt
+
 Schema constants
 ::::::::::::::::
 
@@ -371,6 +388,23 @@ Options
 -------
 
 .. py:data:: LDAP_OPT_PROTOCOL_VERSION
+
+
+SASL options
+::::::::::::
+
+.. py:data:: LDAP_OPT_X_SASL_MECH
+
+   to get the SASL mechanism
+
+.. py:data:: LDAP_OPT_X_SASL_MECHLIST
+
+   to get the list of the available SASL mechanisms. For example:
+
+   .. code-block:: python
+
+      >>> ldap_get_option(LDAP_OPT_X_SASL_MECHLIST)
+      ('ANONYMOUS', 'LOGIN', 'PLAIN', 'CRAM-MD5', 'NTLM', 'EXTERNAL', 'DIGEST-MD5')
 
 .. _libldap-tls-options:
 

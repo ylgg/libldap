@@ -95,6 +95,23 @@ LDAPObject classes
       .. seealso::
          :manpage:`ldap_bind_s(3)`
 
+   .. py:method:: sasl_interactive_bind_s([mechs [, flags [, user [, password]]]])
+
+      Performs a (interactive) SASL bind
+
+      :param mechs: a list or a tuple of candidate mechanisms to use. For
+		    example: :py:data:`('LOGIN', 'PLAIN', 'DIGEST-MD5')`
+      :param int flags: controls the interaction used to retrieve any necessary
+			SASL authentication parameters. See
+			:ref:`libldap-sasl-constants` for available flags
+      :param str user:
+      :param str password:
+      :return: :py:const:`None`
+      :raises: :py:exc:`LDAPError`, :py:exc:`TypeError`
+      
+      .. seealso::
+	 :manpage:`ldap_sasl_interactive_bind_s(3)`
+      
    .. py:method:: unbind_s()
 
       Unbind from the directory, terminate the current association,

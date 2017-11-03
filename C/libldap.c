@@ -201,6 +201,8 @@ LibLDAP_add_constants(PyObject *m)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_OPT_X_TLS_TRY) < 0)
 	return -1;
+    if (PyModule_AddIntMacro(m, LDAP_OPT_X_SASL_MECH) < 0)
+	return -1;
     if (PyModule_AddIntMacro(m, LDAP_OPT_X_SASL_MECHLIST) < 0)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_OPT_PROTOCOL_VERSION) < 0)
