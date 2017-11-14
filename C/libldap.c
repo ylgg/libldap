@@ -258,5 +258,7 @@ LibLDAP_add_constants(PyObject *m)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_SASL_QUIET) < 0)
 	return -1;
+    if (PyModule_AddObject(m, "LDAP_SASL_SIMPLE", Py_None) < 0)
+	return -1;
     return 0;
 }

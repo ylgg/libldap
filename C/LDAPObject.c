@@ -114,7 +114,7 @@ static PyObject *
 LDAPObject_sasl_bind_s(LDAPObject *self, PyObject *args, PyObject *kwds)
 {
     int ecode, dflag, pflag;
-    char *dn = NULL, *mech = LDAP_SASL_SIMPLE;
+    char *dn = NULL, *mech = NULL;
     struct berval cred = {.bv_val = NULL, .bv_len = 0}, *servercredp;
     LDAPDN ldn;
     static char *kwlist[] = {"mech", "dn", "password", NULL};
@@ -122,9 +122,11 @@ LDAPObject_sasl_bind_s(LDAPObject *self, PyObject *args, PyObject *kwds)
     if (!LDAPObject_conn_valid((PyObject *) self, "sasl__bind_s"))
 	return NULL;
     if (!PyArg_ParseTupleAndKeywords(
-	    args, kwds, "|sss#", kwlist, &mech, &dn, &cred.bv_val,
+	    args, kwds, "|zss#", kwlist, &mech, &dn, &cred.bv_val,
 	    &cred.bv_len))
 	return NULL;
+    if (!mech)
+	mech = LDAP_SASL_SIMPLE;
     for (char *p = mech; p && *p; p++)
 	*p = toupper(*p);
     dflag = dn ? 0 : 1;
