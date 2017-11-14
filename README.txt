@@ -26,7 +26,7 @@ Basic Installation
      $ python3 setup.py build
 
   3. To (re)make html documentation, run (you need `sphinx' tool for Python3,
-     see http://sphinx-doc.org):
+     see http://sphinx-doc.org and `sphinx_py3doc_enhanced_theme' module):
 
      $ python3 setup.py build_sphinx --source-dir sphinx/source --build-dir doc
 
