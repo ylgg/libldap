@@ -274,6 +274,10 @@ SASL constants
 
    never prompt
 
+.. py:data:: LDAP_SASL_SIMPLE
+
+   select simple authentication
+
 Schema constants
 ::::::::::::::::
 

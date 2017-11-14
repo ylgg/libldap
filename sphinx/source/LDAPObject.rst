@@ -95,19 +95,72 @@ LDAPObject classes
       .. seealso::
          :manpage:`ldap_bind_s(3)`
 
+   .. py:method:: sasl_bind_s([mech [, dn [, password]]])
+
+      Performs a SASL bind
+      
+      :param str mech: a SASL mechanism. For example:
+                       :py:data:`'DIGEST-MD5'`, :py:data:`'GSSAPI'`,...
+		       Default is :py:const:`LDAP_SASL_SIMPLE`
+      :param str dn: the DN to bind as. If not provided,
+                     :py:meth:`sasl_bind_s` will prompt for it.
+      :param str password: the password associated to entry
+			   :py:const:`dn`. If not provided,
+			   :py:meth:`sasl_bind_s` will prompt for it.
+      :return: :py:const:`None`
+      :raises: :py:exc:`LDAPError`, :py:exc:`TypeError`
+
+      .. code-block:: python
+
+	 >>> l = ldap_initialize('ldap://host.test')
+	 >>> l.start_tls_s()
+	 >>> l.sasl_bind_s(dn='uid=testsasl,ou=users,dc=example,dc=test')
+	 Enter password:
+	 >>> 
+	 
+      .. seealso::
+	 :manpage:`ldap_sasl_bind_s(3)`
+
    .. py:method:: sasl_interactive_bind_s([mechs [, flags [, user [, password]]]])
 
       Performs a (interactive) SASL bind
 
       :param mechs: a list or a tuple of candidate mechanisms to use. For
 		    example: :py:data:`('LOGIN', 'PLAIN', 'DIGEST-MD5')`
-      :param int flags: controls the interaction used to retrieve any necessary
-			SASL authentication parameters. See
-			:ref:`libldap-sasl-constants` for available flags
-      :param str user:
-      :param str password:
+      :param int flags: controls the interaction used to retrieve any
+			necessary SASL authentication
+			parameters. Default :py:const:`flags` is
+			:py:const:`LDAP_SASL_INTERACTIVE` if
+			:py:const:`user` or :py:const:`password` is
+			not provided and :py:const:`LDAP_SASL_QUIET`
+			otherwise.  See :ref:`libldap-sasl-constants`
+			for available flags
+      :param str user: the user to authenticate. If not provided,
+	 :py:meth:`sasl_interactive_bind_s` will prompt for it.
+      :param str password: the password for the provided user. If not given,
+	 :py:meth:`sasl_interactive_bind_s` will prompt for it.
       :return: :py:const:`None`
       :raises: :py:exc:`LDAPError`, :py:exc:`TypeError`
+
+      .. code-block:: python
+
+	 >>> l = ldap_initialize('ldap://host.test')
+	 >>> l.start_tls_s()
+	 >>> l.sasl_interactive_bind_s(user='testsasl')
+	 SASL/DIGEST-MD5 authentication started
+	 Enter user's password: 
+	 SASL username: testsasl
+	 SASL SSF: 128
+	 SASL data security layer installed.
+	 >>> 
+
+      Another example:
+
+      .. code-block:: python
+
+	 >>> l.sasl_interactive_bind_s(mechs=('DIGEST-MD5',), flags=LDAP_SASL_QUIET, user='testsasl')
+	 Enter user's password:
+	 >>> 
       
       .. seealso::
 	 :manpage:`ldap_sasl_interactive_bind_s(3)`
