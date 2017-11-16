@@ -47,7 +47,7 @@ Documentation
 
   On line documentation can be found at:
 
-     http://libldap.readthedocs.io/en/latest/
+     http://libldap.readthedocs.io
 
 License information
 ===================

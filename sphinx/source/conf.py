@@ -15,12 +15,12 @@
 
 import sys
 import os
-#import sphinx_py3doc_enhanced_theme
+import sphinx_py3doc_enhanced_theme
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#sys.path.insert(0, os.path.abspath('.'))
+#sys.path.insert(0, os.pah.abspath('.'))
 
 # -- General configuration ------------------------------------------------
 
@@ -89,7 +89,7 @@ exclude_patterns = []
 #show_authors = False
 
 # The name of the Pygments (syntax highlighting) style to use.
-#pygments_style = 'friendly'
+pygments_style = 'friendly'
 
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
@@ -102,25 +102,25 @@ exclude_patterns = []
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#html_theme = 'sphinx_py3doc_enhanced_theme'
-html_theme = 'default'
+html_theme = 'sphinx_py3doc_enhanced_theme'
+
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
 #html_theme_options = {}
-## html_theme_options = {
-##     #'githuburl': 'https://github.com/ionelmc/sphinx-py3doc-enhanced-theme/',
-##     'bodyfont': '"Lucida Grande",Arial,sans-serif',
-##     'headfont': '"Lucida Grande",Arial,sans-serif',
-##     'codefont': 'monospace,sans-serif',
-##     'linkcolor': '#0072AA',
-##     'visitedlinkcolor': '#6363bb',
-##     'extrastyling': False,
-## }
+html_theme_options = {
+    #'githuburl': 'https://github.com/ionelmc/sphinx-py3doc-enhanced-theme/',
+    'bodyfont': '"Lucida Grande",Arial,sans-serif',
+    'headfont': '"Lucida Grande",Arial,sans-serif',
+    'codefont': 'monospace,sans-serif',
+    'linkcolor': '#0072AA',
+    'visitedlinkcolor': '#6363bb',
+    'extrastyling': False,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
-#html_theme_path = [sphinx_py3doc_enhanced_theme.get_html_theme_path()]
+html_theme_path = [sphinx_py3doc_enhanced_theme.get_html_theme_path()]
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
