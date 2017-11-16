@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-PKG_DIST = 'py3-libldap'
+PKG_DIST = 'py3-libldap-dev0'
 PKG_NAME = 'libldap'
 PKG_VERS = '1.2'
 
@@ -37,5 +37,6 @@ setup(
     platforms=['Linux', 'FreeBSD'],
     py_modules=['libldap'],
     ext_modules=[libldap_module],
+    url='https://github.com/ylgg/libldap',
     include_package_data=True
 )
