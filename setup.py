@@ -1,17 +1,24 @@
 #!/usr/bin/env python3
 
-PKG_DIST = 'py3-libldap-dev0'
+PKG_DIST = 'py3-libldap-dev3'
 PKG_NAME = 'libldap'
 PKG_VERS = '1.2'
 
-import os
+import codecs, os
 
 from setuptools import setup, Extension
 
+HERE = os.path.abspath(os.path.dirname(__file__))
+
+def read(*parts):
+    with codecs.open(os.path.join(HERE, *parts), "rb", "utf-8") as f:
+        return f.read()
+    
 define_macros=[('LDAP_DEPRECATED', 1)]
 if os.uname()[0] == 'Darwin':
     define_macros.append(('__LIBLDAP_DARWIN__', 1))
 
+    
 libldap_module = Extension(
     '_' + PKG_NAME,
     sources=[
@@ -31,6 +38,7 @@ setup(
     name=PKG_DIST,
     version=PKG_VERS,
     description='OpenLDAP library wrapper',
+    long_description=read('README.txt'),
     author='Yves Legrandgerard',
     author_email='ylg@pps.univ-paris-diderot.fr',
     license='DWTFYWT',
