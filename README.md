@@ -42,6 +42,13 @@ Basic Installation
 
      to save disk space.
 
+Documentation
+=============
+
+  On line documentation can be found at:
+
+     http://libldap.readthedocs.io/en/latest/
+
 License information
 ===================
 
