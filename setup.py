@@ -17,6 +17,9 @@ def read(*parts):
 define_macros=[('LDAP_DEPRECATED', 1)]
 if os.uname()[0] == 'Darwin':
     define_macros.append(('__LIBLDAP_DARWIN__', 1))
+    library_dirs=['/usr/local/lib']
+else:
+    library_dirs=[]
 
     
 libldap_module = Extension(
@@ -31,6 +34,7 @@ libldap_module = Extension(
         ],
     include_dirs=['C', '/usr/local/include'],
     libraries=['ldap'],
+    library_dirs=library_dirs,
     define_macros=define_macros
     )
 
