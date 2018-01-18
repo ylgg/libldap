@@ -7,6 +7,7 @@ PKG_VERS = '1.2'
 import codecs, os
 
 from setuptools import setup, Extension
+from ctypes.util import find_library
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -21,6 +22,9 @@ if os.uname()[0] == 'Darwin':
 else:
     library_dirs=[]
 
+libsasl = find_library('sasl'), find_library('sasl2')
+if libsasl != (None, None):
+    define_macros.append(('__HAVE_SASL__', 1))
     
 libldap_module = Extension(
     '_' + PKG_NAME,

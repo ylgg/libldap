@@ -201,10 +201,12 @@ LibLDAP_add_constants(PyObject *m)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_OPT_X_TLS_TRY) < 0)
 	return -1;
+#ifdef __HAVE_SASL__
     if (PyModule_AddIntMacro(m, LDAP_OPT_X_SASL_MECH) < 0)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_OPT_X_SASL_MECHLIST) < 0)
 	return -1;
+#endif /* __HAVE_SASL__ */
     if (PyModule_AddIntMacro(m, LDAP_OPT_PROTOCOL_VERSION) < 0)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_MOD_ADD) < 0)
@@ -252,6 +254,7 @@ LibLDAP_add_constants(PyObject *m)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_DN_PEDANTIC) < 0)
 	return -1;
+#ifdef __HAVE_SASL__
     if (PyModule_AddIntMacro(m, LDAP_SASL_AUTOMATIC) < 0)
 	return -1;
     if (PyModule_AddIntMacro(m, LDAP_SASL_INTERACTIVE) < 0)
@@ -260,5 +263,6 @@ LibLDAP_add_constants(PyObject *m)
 	return -1;
     if (PyModule_AddObject(m, "LDAP_SASL_SIMPLE", Py_None) < 0)
 	return -1;
+#endif /* __HAVE_SASL__ */
     return 0;
 }

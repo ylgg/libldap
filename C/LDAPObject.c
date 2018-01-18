@@ -8,7 +8,9 @@
 #include <LDAPControls.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#ifdef __HAVE_SASL__
 #include <sasl/sasl.h>
+#endif /* __HAVE_SASL__ */
 #include <termios.h>
 #include <unistd.h>
 
@@ -16,12 +18,14 @@
 extern PyObject *LibLDAPErr;
 #endif
 
+#ifdef __HAVE_SASL__
 typedef struct {
     char       *authname;
     char       *user;
     char       *realm;
     BerValue    cred;
 } SASLAuth_t;
+#endif /* __HAVE_SASL__ */
 
 /*****************************************************************************
  * LOCAL VARIABLES
@@ -37,10 +41,12 @@ static const char *ldap_url_err2string(int);
 static const char *LDAPObject_complete_dn(const char *, PyObject *);
 static LDAPMod **LDAPObject_mods_parse(LDAPObject *, PyObject *, const char *);
 static int LDAPObject_conn_valid(PyObject *, const char *);
+#ifdef __HAVE_SASL__
 static int sasl_parse_mechs(PyObject *, char **);
 static int sasl_interact(LDAP *, unsigned int, void *, void *);
 static int sasl_input_name(char **, const char *);
 static int sasl_input_cred(BerValue *, const char *);
+#endif /* __HAVE_SASL__ */
 
 /*****************************************************************************
  * libldap.LDAP OBJECT
@@ -108,6 +114,7 @@ LDAPObject_bind_s(LDAPObject *self, PyObject *args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
+#ifdef __HAVE_SASL__
 PyDoc_STRVAR(LDAPObjectDoc_sasl_bind_s, "");
 
 static PyObject *
@@ -235,6 +242,7 @@ LDAPObject_sasl_interactive_bind_s(
 	    );
     Py_RETURN_NONE;
 }
+#endif /* __HAVE_SASL__ */
 
 PyDoc_STRVAR(LDAPObjectDoc_unbind_s, "");
 
@@ -313,6 +321,7 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
 	if (ecode != LDAP_OPT_SUCCESS)
 	    goto failed;
 	return Py_BuildValue("i", optval.ival);
+#ifdef __HAVE_SASL__
     case LDAP_OPT_X_SASL_MECH:
     {
 	PyObject *ret;
@@ -348,6 +357,7 @@ LDAPObject_get_option(LDAPObject *self, PyObject *args)
 	}
 	return ret;
     }
+#endif /* __HAVE_SASL__ */
     default:
 	return PyErr_Format(
 	    LibLDAPErr, "%s.get_option(): `%d': option not supported",
@@ -779,6 +789,7 @@ static PyMethodDef LDAPObjectMethods[] = {
     {"bind_s", (PyCFunction) LDAPObject_bind_s,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_bind_s
     },
+#ifdef __HAVE_SASL__
     {"sasl_bind_s", (PyCFunction) LDAPObject_sasl_bind_s,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_sasl_bind_s
     },
@@ -786,6 +797,7 @@ static PyMethodDef LDAPObjectMethods[] = {
      (PyCFunction) LDAPObject_sasl_interactive_bind_s,
      METH_VARARGS | METH_KEYWORDS, LDAPObjectDoc_sasl_interactive_bind_s
     },
+#endif /* __HAVE_SASL__ */
     {"unbind_s", (PyCFunction) LDAPObject_unbind_s, METH_NOARGS,
      LDAPObjectDoc_unbind_s
     },
@@ -1221,6 +1233,7 @@ LDAPObject_conn_valid(PyObject *pyo, const char *func)
     return 1;
 }
 
+#ifdef __HAVE_SASL__
 static int
 sasl_parse_mechs(PyObject *obj, char **mechs)
 {
@@ -1367,3 +1380,4 @@ sasl_input_cred(BerValue *cred, const char *prompt)
     cred->bv_len = (ber_len_t) (len - 1);
     return 0;
 }
+#endif /* __HAVE_SASL__ */
