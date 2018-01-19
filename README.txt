@@ -1,4 +1,4 @@
-libldap module - a wrapper for OpenLDAP library - version 1.2
+libldap module - a wrapper for OpenLDAP library - version 1.3
 =============================================================
 
 Description
