@@ -2,7 +2,7 @@
 
 PKG_DIST = 'py3-libldap'
 PKG_NAME = 'libldap'
-PKG_VERS = '1.2'
+PKG_VERS = '1.3'
 
 import codecs, os
 
