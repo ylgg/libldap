@@ -38,6 +38,7 @@ libldap_module = Extension(
         ],
     include_dirs=['C', '/usr/local/include'],
     libraries=['ldap'],
+    extra_compile_args = ["-fcommon"],
     library_dirs=library_dirs,
     define_macros=define_macros
     )
